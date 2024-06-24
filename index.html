@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Formulário com Busca de CEP</title>
+  <script>
+    function limpa_formulário_cep() {
+        document.getElementById('rua').value = "";
+        document.getElementById('bairro').value = "";
+        document.getElementById('cidade').value = "";
+        document.getElementById('estado').value = "";
+    }
+
+    function meu_callback(conteudo) {
+        if (!("erro" in conteudo)) {
+            document.getElementById('rua').value = conteudo.logradouro;
+            document.getElementById('bairro').value = conteudo.bairro;
+            document.getElementById('cidade').value = conteudo.localidade;
+            document.getElementById('estado').value = conteudo.uf;
+        } else {
+            limpa_formulário_cep();
+            alert("CEP não encontrado.");
+        }
+    }
+
+    function pesquisacep(valor) {
+        var cep = valor.replace(/\D/g, '');
+        if (cep != "") {
+            var validacep = /^[0-9]{8}$/;
+            if (validacep.test(cep)) {
+                document.getElementById('rua').value = "...";
+                document.getElementById('bairro').value = "...";
+                document.getElementById('cidade').value = "...";
+                document.getElementById('estado').value = "...";
+
+                var script = document.createElement('script');
+                script.src = 'https://viacep.com.br/ws/' + cep + '/json/?callback=meu_callback';
+                document.body.appendChild(script);
+            } else {
+                limpa_formulário_cep();
+                alert("Formato de CEP inválido.");
+            }
+        } else {
+            limpa_formulário_cep();
+        }
+    }
+  </script>
+</head>
+<body>
+
+  <script type="text/javascript" src="https://form.jotform.com/jsform/241751252496055"></script>
+
+  <script>
+    // Função para monitorar mudanças no campo CEP dentro do iframe e chamar pesquisacep quando ele perder o foco
+    window.addEventListener('message', function(event) {
+      var data = event.data;
+      if (data.type === 'cepChange') {
+        pesquisacep(data.value);
+      }
+    });
+
+    // Função para enviar mensagens para o iframe
+    function sendMessageToIframe(type, value) {
+      var iframe = document.querySelector('iframe');
+      iframe.contentWindow.postMessage({ type: type, value: value }, '*');
+    }
+
+    // Aguardar o carregamento do iframe e então configurar o monitoramento do campo CEP
+    window.onload = function() {
+      var iframe = document.querySelector('iframe');
+      iframe.onload = function() {
+        iframe.contentWindow.addEventListener('blur', function(event) {
+          if (event.target.id === 'cep') {
+            sendMessageToIframe('cepChange', event.target.value);
+          }
+        }, true);
+      };
+    };
+  </script>
+
+</body>
+</html>
